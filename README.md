@@ -7,7 +7,7 @@ This project is built as a scalable sandbox, designed to evolve from a simple La
 ---
 
 ## 🎨 UI Mockup
-![Agentic Travel Planner UI](assets/ui_mockup.png)
+![Agentic Travel Planner UI](assets/agentic_travel_ui_mockup.png)
 
 *The UI features a premium dark glassmorphism design with real-time markdown rendering and graceful error handling.*
 

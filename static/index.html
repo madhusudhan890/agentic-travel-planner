@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Agentic Travel Planner — AI-powered itinerary generator using Gemini and LangChain" />
+  <title>Agentic Travel Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <!-- marked.js for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- Background layers -->
+  <div class="bg-gradient"></div>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="header-icon">✈️</span>
+      <div>
+        <span class="header-title">Agentic Travel Planner</span>
+        <span class="header-phase">Phase 1 · LangChain Chain</span>
+      </div>
+    </div>
+    <div class="header-status">
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-text" id="statusText">Connecting...</span>
+    </div>
+  </header>
+
+  <!-- Main layout -->
+  <main class="main">
+
+    <!-- Left panel: Form -->
+    <section class="panel panel-form" aria-label="Trip details">
+      <div class="panel-header">
+        <h1 class="panel-title">Plan Your Trip</h1>
+        <p class="panel-sub">Fill in your details and let AI craft the perfect itinerary</p>
+      </div>
+
+      <form id="tripForm" class="trip-form" novalidate>
+
+        <div class="form-group">
+          <label class="form-label" for="destination">🗺️ Destination</label>
+          <input
+            class="form-input"
+            id="destination"
+            type="text"
+            placeholder="e.g. Tokyo, Japan"
+            required
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="days">📅 Days</label>
+            <input
+              class="form-input"
+              id="days"
+              type="number"
+              min="1"
+              max="30"
+              value="5"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="month">🌤️ Month</label>
+            <select class="form-input form-select" id="month">
+              <option>January</option><option>February</option><option>March</option>
+              <option>April</option><option>May</option><option>June</option>
+              <option>July</option><option>August</option><option>September</option>
+              <option selected>October</option><option>November</option><option>December</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="budget">💰 Budget</label>
+          <input
+            class="form-input"
+            id="budget"
+            type="text"
+            placeholder="e.g. $1500 or ₹80,000"
+            value="$1000"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="interests">🎯 Interests</label>
+          <input
+            class="form-input"
+            id="interests"
+            type="text"
+            placeholder="e.g. food, temples, hiking, nightlife"
+          />
+          <div class="interest-chips" id="interestChips">
+            <button type="button" class="chip" data-value="Food & Culture">🍜 Food & Culture</button>
+            <button type="button" class="chip" data-value="Adventure Sports">🧗 Adventure</button>
+            <button type="button" class="chip" data-value="History & Museums">🏛️ History</button>
+            <button type="button" class="chip" data-value="Beaches & Relaxation">🏖️ Beaches</button>
+            <button type="button" class="chip" data-value="Shopping & Nightlife">🛍️ Shopping</button>
+            <button type="button" class="chip" data-value="Nature & Wildlife">🦋 Nature</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="travelStyle">🎒 Travel Style</label>
+          <div class="style-options" id="styleOptions">
+            <button type="button" class="style-btn active" data-value="balanced">⚖️ Balanced</button>
+            <button type="button" class="style-btn" data-value="budget backpacker">🎒 Budget</button>
+            <button type="button" class="style-btn" data-value="luxury">💎 Luxury</button>
+            <button type="button" class="style-btn" data-value="family with kids">👨‍👩‍👧 Family</button>
+            <button type="button" class="style-btn" data-value="solo adventurer">🧭 Solo</button>
+          </div>
+          <input type="hidden" id="travelStyle" value="balanced" />
+        </div>
+
+        <button class="btn-plan" id="planBtn" type="submit">
+          <span class="btn-text">✨ Generate Itinerary</span>
+          <span class="btn-loader" id="btnLoader" hidden>
+            <span class="spinner"></span> Planning...
+          </span>
+        </button>
+
+      </form>
+    </section>
+
+    <!-- Right panel: Itinerary output -->
+    <section class="panel panel-result" aria-label="Generated itinerary" id="resultPanel">
+
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-globe">🌍</div>
+        <h2 class="empty-title">Your itinerary will appear here</h2>
+        <p class="empty-sub">Fill in the trip details on the left and click <strong>Generate Itinerary</strong> to get started.</p>
+        <div class="example-tags">
+          <span class="eg-tag" id="eg1">Try: Tokyo · 7 days</span>
+          <span class="eg-tag" id="eg2">Try: Goa · 5 days</span>
+          <span class="eg-tag" id="eg3">Try: Paris · 3 days</span>
+        </div>
+      </div>
+
+      <!-- Result state -->
+      <div class="result-content" id="resultContent" hidden>
+        <div class="result-header">
+          <div class="result-meta">
+            <h2 class="result-destination" id="resultDestination"></h2>
+            <div class="result-tags" id="resultTags"></div>
+          </div>
+          <button class="btn-copy" id="copyBtn" title="Copy itinerary">📋 Copy</button>
+        </div>
+        <div class="itinerary-body" id="itineraryBody"></div>
+        <div class="result-footer">
+          <span class="provider-badge" id="providerBadge"></span>
+          <button class="btn-replan" id="replanBtn">🔄 Plan Another Trip</button>
+        </div>
+      </div>
+
+      <!-- Error state -->
+      <div class="error-state" id="errorState" hidden>
+        <div class="error-icon">⚠️</div>
+        <p class="error-msg" id="errorMsg"></p>
+        <button class="btn-retry" id="retryBtn">Try Again</button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets — never commit the real .env
+.env
+
+# Allow the example file so others can onboard
+!.env.example
+
+# Local data (uploaded PDFs and local ChromaDB storage)
+data/chromadb/
+data/uploads/

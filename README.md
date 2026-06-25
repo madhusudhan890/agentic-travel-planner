@@ -7,7 +7,7 @@ This project is built as a scalable sandbox, designed to evolve from a simple La
 ---
 
 ## 🎨 UI Mockup
-![Agentic Travel Planner UI](file:///Users/madhusudhanrao/.gemini/antigravity-ide/brain/51b9ac06-f6ed-431e-ad70-05f94cc665fb/chatpdf_ui_mockup_1782207468311.png)
+![Agentic Travel Planner UI](assets/ui_mockup.png)
 
 *The UI features a premium dark glassmorphism design with real-time markdown rendering and graceful error handling.*
 

@@ -2,181 +2,1749 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Agentic Travel Planner — AI-powered itinerary generator using Gemini and LangChain" />
-  <title>Agentic Travel Planner</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
-  <!-- marked.js for markdown rendering -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Travel Planner Enterprise | LangGraph Multi-Agent</title>
+  <meta name="description" content="Enterprise AI Travel Planner powered by LangGraph multi-agent system with real-time streaming, specialist agents, and RAG."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    :root {
+      --bg-deep: #050810;
+      --bg-card: rgba(10,15,35,0.85);
+      --bg-glass: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --border-glow: rgba(99,179,237,0.3);
+      --accent-blue: #63b3ed;
+      --accent-violet: #9f7aea;
+      --accent-cyan: #76e4f7;
+      --accent-green: #68d391;
+      --accent-orange: #f6ad55;
+      --accent-red: #fc8181;
+      --accent-gold: #f6d860;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-dim: #4a5568;
+      --node-pending: #2d3748;
+      --node-running: #2b6cb0;
+      --node-done: #276749;
+      --node-error: #742a2a;
+      --gradient-hero: linear-gradient(135deg, #050810 0%, #0d1b40 50%, #050810 100%);
+      --gradient-card: linear-gradient(135deg, rgba(15,25,60,0.9), rgba(8,12,30,0.95));
+      --gradient-accent: linear-gradient(135deg, #667eea, #764ba2);
+      --shadow-glow: 0 0 30px rgba(99,179,237,0.15);
+      --shadow-card: 0 8px 32px rgba(0,0,0,0.5);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(99,179,237,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(159,122,234,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 50% 50%, rgba(118,228,247,0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Floating particles ── */
+    .particles {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .particle {
+      position: absolute; border-radius: 50%;
+      background: rgba(99,179,237,0.4);
+      animation: float linear infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 0.5; }
+      100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ── Layout ── */
+    .app-container {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+      gap: 0;
+    }
+
+    /* ── Header ── */
+    .header {
+      grid-column: 1 / -1;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(5,8,16,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .header-brand {
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .header-logo {
+      width: 40px; height: 40px;
+      background: var(--gradient-accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(102,126,234,0.4);
+    }
+
+    .header-title {
+      font-size: 17px; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .header-subtitle {
+      font-size: 11px; color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .phase-badge {
+      padding: 4px 12px;
+      background: linear-gradient(135deg, rgba(99,179,237,0.15), rgba(159,122,234,0.15));
+      border: 1px solid rgba(99,179,237,0.3);
+      border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+
+    .header-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse-dot 2s ease infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.8); }
+    }
+
+    /* ── Left Sidebar — Agent Graph ── */
+    .sidebar {
+      background: rgba(5,8,20,0.6);
+      backdrop-filter: blur(10px);
+      border-right: 1px solid var(--border);
+      padding: 24px 20px;
+      overflow-y: auto;
+      max-height: calc(100vh - 65px);
+      position: sticky; top: 65px;
+    }
+
+    .sidebar-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .sidebar-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Agent Node Cards ── */
+    .agent-node {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-glass);
+      margin-bottom: 4px;
+      cursor: default;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .agent-node::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--node-color, var(--node-pending));
+      border-radius: 3px 0 0 3px;
+      transition: var(--transition);
+    }
+
+    .agent-node.status-pending { --node-color: var(--text-dim); }
+    .agent-node.status-running {
+      --node-color: var(--accent-blue);
+      border-color: rgba(99,179,237,0.3);
+      background: rgba(99,179,237,0.06);
+      box-shadow: 0 0 20px rgba(99,179,237,0.1);
+    }
+    .agent-node.status-completed {
+      --node-color: var(--accent-green);
+      border-color: rgba(104,211,145,0.2);
+      background: rgba(104,211,145,0.04);
+    }
+    .agent-node.status-error {
+      --node-color: var(--accent-red);
+      border-color: rgba(252,129,129,0.2);
+      background: rgba(252,129,129,0.04);
+    }
+
+    .node-icon {
+      font-size: 18px;
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+
+    .agent-node.status-running .node-icon {
+      animation: spin-glow 2s linear infinite;
+    }
+
+    @keyframes spin-glow {
+      0% { box-shadow: 0 0 0 0 rgba(99,179,237,0.6); }
+      50% { box-shadow: 0 0 12px 4px rgba(99,179,237,0.3); }
+      100% { box-shadow: 0 0 0 0 rgba(99,179,237,0.6); }
+    }
+
+    .node-info { flex: 1; min-width: 0; }
+
+    .node-name {
+      font-size: 12px; font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .node-output {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .node-status-icon {
+      font-size: 14px; flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    /* Connector between nodes */
+    .node-connector {
+      width: 2px; height: 10px;
+      margin: 0 0 0 22px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+      border-radius: 1px;
+    }
+
+    /* ── Progress Bar ── */
+    .progress-section {
+      margin: 16px 0;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 11px; font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      height: 4px; background: rgba(255,255,255,0.08);
+      border-radius: 4px; overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-violet), var(--accent-cyan));
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute; right: 0; top: 0; bottom: 0;
+      width: 40px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+      animation: shimmer 1.5s ease infinite;
+    }
+
+    @keyframes shimmer {
+      0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; }
+    }
+
+    /* ── Metrics Panel ── */
+    .metrics-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; margin-top: 16px;
+    }
+
+    .metric-card {
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 18px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-cyan);
+    }
+
+    .metric-label {
+      font-size: 9px; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ── Tool Activity Feed ── */
+    .tool-feed {
+      margin-top: 16px;
+    }
+
+    .tool-feed-title {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .tool-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      margin-bottom: 3px;
+      animation: slide-in 0.3s ease;
+    }
+
+    .tool-item.running {
+      border-color: rgba(246,173,85,0.3);
+      background: rgba(246,173,85,0.05);
+      color: var(--accent-orange);
+    }
+
+    .tool-item.done {
+      border-color: rgba(104,211,145,0.2);
+      color: rgba(104,211,145,0.7);
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Main Content Area ── */
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 65px);
+      padding: 24px;
+      gap: 20px;
+    }
+
+    /* ── Input Form Card ── */
+    .input-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .card-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .card-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--gradient-accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 20px rgba(102,126,234,0.3);
+    }
+
+    .card-title {
+      font-size: 18px; font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .card-desc {
+      font-size: 12px; color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* ── Form Grid ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    .form-group.full-width { grid-column: 1 / -1; }
+    .form-group.half-width { grid-column: span 2; }
+
+    .form-label {
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text-secondary);
+    }
+
+    .form-input, .form-select {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: var(--transition);
+      width: 100%;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--accent-blue);
+      background: rgba(99,179,237,0.06);
+      box-shadow: 0 0 0 3px rgba(99,179,237,0.1);
+    }
+
+    .form-input::placeholder { color: var(--text-dim); }
+
+    .form-select option {
+      background: #0d1b40; color: var(--text-primary);
+    }
+
+    /* ── Submit Button ── */
+    .submit-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 14px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none; border-radius: 12px;
+      color: white; font-size: 15px; font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 20px;
+      box-shadow: 0 4px 20px rgba(102,126,234,0.3);
+      position: relative; overflow: hidden;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .submit-btn:hover:not(:disabled)::before { opacity: 1; }
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(102,126,234,0.5);
+    }
+
+    .submit-btn:active:not(:disabled) { transform: translateY(0); }
+
+    .submit-btn:disabled {
+      opacity: 0.6; cursor: not-allowed;
+      background: linear-gradient(135deg, #4a5568, #2d3748);
+    }
+
+    .btn-spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Output Section ── */
+    .output-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex: 1;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      min-height: 500px;
+    }
+
+    .output-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .output-tabs {
+      display: flex; gap: 4px;
+    }
+
+    .tab-btn {
+      padding: 6px 14px; border-radius: 8px;
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-secondary); font-size: 12px; font-weight: 500;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: var(--transition);
+    }
+
+    .tab-btn.active {
+      background: rgba(99,179,237,0.12);
+      border-color: rgba(99,179,237,0.3);
+      color: var(--accent-blue);
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-primary);
+    }
+
+    .output-actions {
+      display: flex; gap: 8px;
+    }
+
+    .action-btn {
+      padding: 6px 14px; border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary); font-size: 11px; font-weight: 500;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: var(--transition);
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .action-btn:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-primary);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    .action-btn.primary {
+      background: rgba(104,211,145,0.1);
+      border-color: rgba(104,211,145,0.3);
+      color: var(--accent-green);
+    }
+
+    /* ── Output Body ── */
+    .output-body {
+      flex: 1; overflow-y: auto; padding: 24px;
+    }
+
+    /* ── Empty State ── */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%;
+      text-align: center; gap: 16px;
+      min-height: 300px;
+    }
+
+    .empty-globe {
+      font-size: 60px;
+      animation: float-globe 4s ease-in-out infinite;
+    }
+
+    @keyframes float-globe {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50% { transform: translateY(-12px) rotate(5deg); }
+    }
+
+    .empty-title {
+      font-size: 22px; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .empty-desc { font-size: 14px; color: var(--text-secondary); max-width: 400px; line-height: 1.6; }
+
+    .example-chips {
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+      margin-top: 8px;
+    }
+
+    .chip {
+      padding: 6px 14px; border-radius: 20px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-secondary); font-size: 12px;
+      cursor: pointer; transition: var(--transition);
+    }
+
+    .chip:hover {
+      border-color: rgba(99,179,237,0.4);
+      color: var(--accent-blue);
+      background: rgba(99,179,237,0.06);
+    }
+
+    /* ── Markdown Output ── */
+    .markdown-output {
+      line-height: 1.75;
+      color: var(--text-primary);
+    }
+
+    .markdown-output h1 {
+      font-size: 24px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .markdown-output h2 {
+      font-size: 17px; font-weight: 700;
+      color: var(--accent-cyan);
+      margin: 24px 0 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .markdown-output h2::before {
+      content: ''; display: block;
+      width: 4px; height: 18px;
+      background: var(--accent-cyan);
+      border-radius: 2px; flex-shrink: 0;
+    }
+
+    .markdown-output h3 {
+      font-size: 14px; font-weight: 600;
+      color: var(--accent-violet);
+      margin: 16px 0 8px;
+    }
+
+    .markdown-output p { margin-bottom: 10px; }
+
+    .markdown-output ul, .markdown-output ol {
+      margin: 8px 0 12px 20px;
+    }
+
+    .markdown-output li { margin-bottom: 4px; }
+
+    .markdown-output strong { color: var(--accent-gold); }
+
+    .markdown-output em { color: var(--accent-orange); }
+
+    .markdown-output table {
+      width: 100%; border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    .markdown-output th {
+      background: rgba(99,179,237,0.1);
+      color: var(--accent-blue);
+      padding: 10px 14px; text-align: left;
+      border: 1px solid rgba(99,179,237,0.15);
+      font-weight: 600; font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .markdown-output td {
+      padding: 8px 14px;
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text-primary);
+    }
+
+    .markdown-output tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .markdown-output blockquote {
+      border-left: 3px solid var(--accent-violet);
+      padding: 10px 16px;
+      background: rgba(159,122,234,0.06);
+      border-radius: 0 8px 8px 0;
+      margin: 12px 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .markdown-output code {
+      background: rgba(99,179,237,0.1);
+      padding: 2px 6px; border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; color: var(--accent-cyan);
+    }
+
+    .markdown-output hr {
+      border: none; height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    /* ── Agent Outputs Tab ── */
+    .agent-outputs-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .agent-output-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      animation: fade-in 0.4s ease;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .agent-output-header {
+      font-size: 12px; font-weight: 600;
+      color: var(--accent-blue);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .agent-output-body {
+      font-size: 11px; color: var(--text-secondary);
+      line-height: 1.5; font-family: 'JetBrains Mono', monospace;
+      max-height: 160px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* ── Event Log Tab ── */
+    .event-log {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    .log-item {
+      display: grid;
+      grid-template-columns: 70px auto 1fr;
+      gap: 10px; align-items: start;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      animation: slide-in 0.2s ease;
+    }
+
+    .log-time { color: var(--text-dim); }
+
+    .log-type {
+      padding: 1px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.3px;
+    }
+
+    .log-type.start { background: rgba(99,179,237,0.2); color: var(--accent-blue); }
+    .log-type.end { background: rgba(104,211,145,0.2); color: var(--accent-green); }
+    .log-type.error { background: rgba(252,129,129,0.2); color: var(--accent-red); }
+    .log-type.tool { background: rgba(246,173,85,0.2); color: var(--accent-orange); }
+    .log-type.info { background: rgba(159,122,234,0.2); color: var(--accent-violet); }
+
+    .log-msg { color: var(--text-secondary); word-break: break-all; }
+
+    /* ── Human Approval Panel ── */
+    .approval-panel {
+      display: none;
+      background: rgba(246,173,85,0.06);
+      border: 1px solid rgba(246,173,85,0.3);
+      border-radius: var(--radius);
+      padding: 24px;
+      animation: fade-in 0.4s ease;
+    }
+
+    .approval-panel.active { display: block; }
+
+    .approval-title {
+      font-size: 16px; font-weight: 700;
+      color: var(--accent-gold);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .approval-desc {
+      font-size: 13px; color: var(--text-secondary);
+      margin-bottom: 20px; line-height: 1.6;
+    }
+
+    .approval-textarea {
+      width: 100%; padding: 12px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary); font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      outline: none; resize: vertical;
+      min-height: 80px; margin-bottom: 16px;
+      transition: var(--transition);
+    }
+
+    .approval-textarea:focus {
+      border-color: var(--accent-gold);
+      background: rgba(246,216,96,0.04);
+    }
+
+    .approval-buttons {
+      display: flex; gap: 12px;
+    }
+
+    .approve-btn {
+      flex: 1; padding: 12px; border-radius: 10px;
+      border: none; cursor: pointer;
+      font-size: 14px; font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      transition: var(--transition);
+    }
+
+    .approve-btn.yes {
+      background: linear-gradient(135deg, #276749, #48bb78);
+      color: white;
+      box-shadow: 0 4px 15px rgba(72,187,120,0.3);
+    }
+
+    .approve-btn.no {
+      background: rgba(252,129,129,0.1);
+      border: 1px solid rgba(252,129,129,0.3);
+      color: var(--accent-red);
+    }
+
+    .approve-btn:hover { transform: translateY(-2px); }
+
+    /* ── Streaming cursor ── */
+    .streaming-cursor {
+      display: inline-block;
+      width: 2px; height: 1em;
+      background: var(--accent-cyan);
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; } 50% { opacity: 0; }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .app-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+      }
+      .sidebar {
+        max-height: 280px;
+        position: relative; top: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .form-grid { grid-template-columns: 1fr 1fr; }
+      .agent-outputs-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.half-width, .form-group.full-width { grid-column: auto; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Background layers -->
-  <div class="bg-gradient"></div>
-  <div class="bg-orbs">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-  </div>
+<!-- Floating Particles -->
+<div class="particles" id="particles"></div>
 
-  <!-- Header -->
+<div class="app-container">
+
+  <!-- ── HEADER ── -->
   <header class="header">
     <div class="header-brand">
-      <span class="header-icon">✈️</span>
+      <div class="header-logo">🌍</div>
       <div>
-        <span class="header-title">Agentic Travel Planner</span>
-        <span class="header-phase">Phase 1 · LangChain Chain</span>
+        <div class="header-title">AI Travel Planner Enterprise</div>
+        <div class="header-subtitle">LangGraph · Multi-Agent · RAG · Streaming</div>
       </div>
     </div>
-    <div class="header-status">
-      <span class="status-dot" id="statusDot"></span>
-      <span class="status-text" id="statusText">Connecting...</span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="phase-badge">PHASE 3 · LANGGRAPH</div>
+      <div class="header-status">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Ready</span>
+      </div>
     </div>
   </header>
 
-  <!-- Main layout -->
-  <main class="main">
+  <!-- ── SIDEBAR — Agent Graph Visualization ── -->
+  <aside class="sidebar">
+    <div class="sidebar-title">🔗 Agent Pipeline</div>
 
-    <!-- Left panel: Form -->
-    <section class="panel panel-form" aria-label="Trip details">
-      <div class="panel-header">
-        <h1 class="panel-title">Plan Your Trip</h1>
-        <p class="panel-sub">Fill in your details and let AI craft the perfect itinerary</p>
+    <!-- Progress -->
+    <div class="progress-section">
+      <div class="progress-label">
+        <span id="progress-label-text">Waiting...</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- Agent Nodes -->
+    <div id="agent-pipeline">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-value" id="metric-elapsed">0s</div>
+        <div class="metric-label">Elapsed</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="metric-tools">0</div>
+        <div class="metric-label">Tool Calls</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="metric-agents">0</div>
+        <div class="metric-label">Agents Done</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" id="metric-errors">0</div>
+        <div class="metric-label">Errors</div>
+      </div>
+    </div>
+
+    <!-- Tool Activity Feed -->
+    <div class="tool-feed">
+      <div class="tool-feed-title">⚡ Tool Activity</div>
+      <div id="tool-feed-items"></div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main class="main-content">
+
+    <!-- Input Card -->
+    <div class="input-card">
+      <div class="card-header">
+        <div class="card-icon">✈️</div>
+        <div>
+          <div class="card-title">Plan Your Perfect Trip</div>
+          <div class="card-desc">AI-powered multi-agent travel planning with real-time research</div>
+        </div>
       </div>
 
-      <form id="tripForm" class="trip-form" novalidate>
-
-        <div class="form-group">
-          <label class="form-label" for="destination">🗺️ Destination</label>
-          <input
-            class="form-input"
-            id="destination"
-            type="text"
-            placeholder="e.g. Tokyo, Japan"
-            required
-            autocomplete="off"
-          />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="days">📅 Days</label>
-            <input
-              class="form-input"
-              id="days"
-              type="number"
-              min="1"
-              max="30"
-              value="5"
-              required
-            />
+      <form id="trip-form">
+        <div class="form-grid">
+          <div class="form-group half-width">
+            <label class="form-label" for="destination">🗺️ Destination</label>
+            <input class="form-input" id="destination" type="text"
+              placeholder="Tokyo, Japan · Paris, France · Bali, Indonesia" required/>
           </div>
           <div class="form-group">
-            <label class="form-label" for="month">🌤️ Month</label>
-            <select class="form-input form-select" id="month">
+            <label class="form-label" for="month">📅 Month</label>
+            <select class="form-select" id="month">
               <option>January</option><option>February</option><option>March</option>
               <option>April</option><option>May</option><option>June</option>
               <option>July</option><option>August</option><option>September</option>
               <option selected>October</option><option>November</option><option>December</option>
             </select>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label class="form-label" for="budget">💰 Budget</label>
-          <input
-            class="form-input"
-            id="budget"
-            type="text"
-            placeholder="e.g. $1500 or ₹80,000"
-            value="$1000"
-          />
-        </div>
+          <div class="form-group">
+            <label class="form-label" for="days">🌙 Duration (days)</label>
+            <input class="form-input" id="days" type="number" min="1" max="30" value="7"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="budget">💰 Total Budget</label>
+            <input class="form-input" id="budget" type="text" placeholder="$2000 · €1500 · ₹80,000" value="$2000"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="travelers">👥 Travelers</label>
+            <input class="form-input" id="travelers" type="number" min="1" max="20" value="2"/>
+          </div>
 
-        <div class="form-group">
-          <label class="form-label" for="interests">🎯 Interests</label>
-          <input
-            class="form-input"
-            id="interests"
-            type="text"
-            placeholder="e.g. food, temples, hiking, nightlife"
-          />
-          <div class="interest-chips" id="interestChips">
-            <button type="button" class="chip" data-value="Food & Culture">🍜 Food & Culture</button>
-            <button type="button" class="chip" data-value="Adventure Sports">🧗 Adventure</button>
-            <button type="button" class="chip" data-value="History & Museums">🏛️ History</button>
-            <button type="button" class="chip" data-value="Beaches & Relaxation">🏖️ Beaches</button>
-            <button type="button" class="chip" data-value="Shopping & Nightlife">🛍️ Shopping</button>
-            <button type="button" class="chip" data-value="Nature & Wildlife">🦋 Nature</button>
+          <div class="form-group half-width">
+            <label class="form-label" for="interests">❤️ Interests</label>
+            <input class="form-input" id="interests" type="text"
+              placeholder="food, temples, hiking, photography, nightlife..."/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="travel-style">🎒 Travel Style</label>
+            <select class="form-select" id="travel-style">
+              <option value="budget backpacker">Budget Backpacker</option>
+              <option value="balanced" selected>Balanced</option>
+              <option value="comfort">Comfort</option>
+              <option value="luxury">Luxury</option>
+              <option value="family with kids">Family with Kids</option>
+              <option value="solo adventurer">Solo Adventurer</option>
+              <option value="digital nomad">Digital Nomad</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="departure">🛫 Departure City (optional)</label>
+            <input class="form-input" id="departure" type="text" placeholder="New York · London · Mumbai"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="email">📧 Email for PDF (optional)</label>
+            <input class="form-input" id="email" type="email" placeholder="you@example.com"/>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;gap:10px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text-secondary);">
+              <input type="checkbox" id="human-approval" style="accent-color:var(--accent-violet);width:15px;height:15px;"/>
+              Require human approval before finalizing
+            </label>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="travelStyle">🎒 Travel Style</label>
-          <div class="style-options" id="styleOptions">
-            <button type="button" class="style-btn active" data-value="balanced">⚖️ Balanced</button>
-            <button type="button" class="style-btn" data-value="budget backpacker">🎒 Budget</button>
-            <button type="button" class="style-btn" data-value="luxury">💎 Luxury</button>
-            <button type="button" class="style-btn" data-value="family with kids">👨‍👩‍👧 Family</button>
-            <button type="button" class="style-btn" data-value="solo adventurer">🧭 Solo</button>
-          </div>
-          <input type="hidden" id="travelStyle" value="balanced" />
-        </div>
-
-        <button class="btn-plan" id="planBtn" type="submit">
-          <span class="btn-text">✨ Generate Itinerary</span>
-          <span class="btn-loader" id="btnLoader" hidden>
-            <span class="spinner"></span> Planning...
-          </span>
+        <button type="submit" class="submit-btn" id="submit-btn">
+          <div class="btn-spinner" id="btn-spinner"></div>
+          <span id="btn-text">🚀 Generate AI Travel Plan</span>
         </button>
-
       </form>
-    </section>
+    </div>
 
-    <!-- Right panel: Itinerary output -->
-    <section class="panel panel-result" aria-label="Generated itinerary" id="resultPanel">
+    <!-- Human Approval Panel -->
+    <div class="approval-panel" id="approval-panel">
+      <div class="approval-title">👤 Human Review Required</div>
+      <div class="approval-desc">
+        The AI has generated your itinerary. Please review it in the <strong>Itinerary</strong> tab
+        and approve or provide feedback for revision.
+      </div>
+      <textarea class="approval-textarea" id="approval-feedback"
+        placeholder="Optional: provide specific feedback if rejecting (e.g., 'Day 3 is too busy, reduce activities')"></textarea>
+      <div class="approval-buttons">
+        <button class="approve-btn yes" onclick="submitApproval(true)">✅ Approve & Generate PDF</button>
+        <button class="approve-btn no" onclick="submitApproval(false)">✏️ Reject & Revise</button>
+      </div>
+    </div>
 
-      <!-- Empty state -->
-      <div class="empty-state" id="emptyState">
-        <div class="empty-globe">🌍</div>
-        <h2 class="empty-title">Your itinerary will appear here</h2>
-        <p class="empty-sub">Fill in the trip details on the left and click <strong>Generate Itinerary</strong> to get started.</p>
-        <div class="example-tags">
-          <span class="eg-tag" id="eg1">Try: Tokyo · 7 days</span>
-          <span class="eg-tag" id="eg2">Try: Goa · 5 days</span>
-          <span class="eg-tag" id="eg3">Try: Paris · 3 days</span>
+    <!-- Output Card -->
+    <div class="output-card">
+      <div class="output-header">
+        <div class="output-tabs">
+          <button class="tab-btn active" onclick="switchTab('itinerary')">📋 Itinerary</button>
+          <button class="tab-btn" onclick="switchTab('agents')">🤖 Agent Data</button>
+          <button class="tab-btn" onclick="switchTab('log')">📊 Event Log</button>
+        </div>
+        <div class="output-actions">
+          <button class="action-btn" id="copy-btn" onclick="copyItinerary()" style="display:none;">
+            📋 Copy
+          </button>
+          <button class="action-btn primary" id="pdf-download-btn" style="display:none;"
+            onclick="downloadPDF()">
+            📄 Download PDF
+          </button>
         </div>
       </div>
-
-      <!-- Result state -->
-      <div class="result-content" id="resultContent" hidden>
-        <div class="result-header">
-          <div class="result-meta">
-            <h2 class="result-destination" id="resultDestination"></h2>
-            <div class="result-tags" id="resultTags"></div>
+      <div class="output-body">
+        <!-- Tab: Itinerary -->
+        <div id="tab-itinerary">
+          <div class="empty-state" id="empty-state">
+            <div class="empty-globe">🌍</div>
+            <div class="empty-title">Your AI Journey Starts Here</div>
+            <div class="empty-desc">
+              Fill in your travel details above and click Generate.<br/>
+              The multi-agent system will research flights, hotels, weather,
+              restaurants, visas, and more — all in parallel.
+            </div>
+            <div class="example-chips">
+              <span class="chip" onclick="fillExample('tokyo')">🗼 Tokyo 7 days</span>
+              <span class="chip" onclick="fillExample('paris')">🗺️ Paris 5 days</span>
+              <span class="chip" onclick="fillExample('bali')">🌴 Bali 10 days</span>
+              <span class="chip" onclick="fillExample('goa')">🏖️ Goa 5 days</span>
+            </div>
           </div>
-          <button class="btn-copy" id="copyBtn" title="Copy itinerary">📋 Copy</button>
+          <div id="itinerary-output" class="markdown-output" style="display:none;"></div>
         </div>
-        <div class="itinerary-body" id="itineraryBody"></div>
-        <div class="result-footer">
-          <span class="provider-badge" id="providerBadge"></span>
-          <button class="btn-replan" id="replanBtn">🔄 Plan Another Trip</button>
+
+        <!-- Tab: Agent Data -->
+        <div id="tab-agents" style="display:none;">
+          <div id="agent-outputs-container">
+            <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:40px;">
+              Agent research results will appear here during generation...
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Event Log -->
+        <div id="tab-log" style="display:none;">
+          <div class="event-log" id="event-log">
+            <div style="color:var(--text-dim);font-size:11px;padding:8px 0;">
+              Awaiting first request...
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- Error state -->
-      <div class="error-state" id="errorState" hidden>
-        <div class="error-icon">⚠️</div>
-        <p class="error-msg" id="errorMsg"></p>
-        <button class="btn-retry" id="retryBtn">Try Again</button>
-      </div>
-
-    </section>
+    </div>
 
   </main>
+</div>
 
-  <script src="/static/app.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════
+// AGENT PIPELINE DEFINITION
+// ══════════════════════════════════════════════════════════════
+const PIPELINE_NODES = [
+  { id: 'planner',      icon: '🧠', name: 'Trip Planner',         desc: 'Extract intent & activate agents' },
+  { id: 'retriever',    icon: '🔍', name: 'Knowledge Retriever',   desc: 'RAG lookup from ChromaDB' },
+  { id: 'run_agents',   icon: '⚡', name: 'Parallel Agents',       desc: 'Flight · Hotel · Weather · More' },
+  { id: 'writer',       icon: '✍️', name: 'Itinerary Writer',      desc: 'Synthesize all research' },
+  { id: 'reviewer',     icon: '👀', name: 'Quality Reviewer',      desc: 'LLM-as-judge quality gate' },
+  { id: 'human_approval',icon:'👤', name: 'Human Approval',        desc: 'Human-in-the-loop checkpoint' },
+  { id: 'pdf_generator',icon: '📄', name: 'PDF Generator',         desc: 'ReportLab PDF creation' },
+  { id: 'email_sender', icon: '📧', name: 'Email Sender',          desc: 'SMTP delivery' },
+];
+
+const AGENT_ICONS = {
+  flight: '✈️', hotel: '🏨', weather: '🌤️',
+  budget: '💰', restaurant: '🍜', visa: '🛂',
+  currency: '💱'
+};
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let state = {
+  isRunning: false,
+  sessionId: null,
+  nodeStatuses: {},
+  agentOutputs: {},
+  eventLog: [],
+  toolCallCount: 0,
+  agentsDone: 0,
+  errorCount: 0,
+  startTime: null,
+  elapsedTimer: null,
+  currentDraft: '',
+  finalItinerary: '',
+  pdfPath: '',
+  requireApproval: false,
+};
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  renderParticles();
+  renderPipeline();
+  startElapsedTimer();
+  document.getElementById('trip-form').addEventListener('submit', onSubmit);
+});
+
+// ── Floating particles ──────────────────────────────────────
+function renderParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 4 + 2;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      animation-duration:${Math.random()*20+15}s;
+      animation-delay:-${Math.random()*20}s;
+      opacity:${Math.random()*0.4+0.1};
+    `;
+    container.appendChild(p);
+  }
+}
+
+// ── Render agent pipeline sidebar ──────────────────────────
+function renderPipeline() {
+  const container = document.getElementById('agent-pipeline');
+  container.innerHTML = '';
+  PIPELINE_NODES.forEach((node, idx) => {
+    const status = state.nodeStatuses[node.id] || 'pending';
+    const output = state.agentOutputs[node.id] || '';
+    const statusIcon = { pending: '⏳', running: '🔄', completed: '✅', error: '❌', skipped: '⏭️' }[status] || '⏳';
+
+    container.innerHTML += `
+      <div class="agent-node status-${status}" id="node-${node.id}">
+        <div class="node-icon">${node.icon}</div>
+        <div class="node-info">
+          <div class="node-name">${node.name}</div>
+          <div class="node-output">${output || node.desc}</div>
+        </div>
+        <div class="node-status-icon">${statusIcon}</div>
+      </div>
+      ${idx < PIPELINE_NODES.length - 1 ? '<div class="node-connector"></div>' : ''}
+    `;
+  });
+}
+
+function updateNodeStatus(nodeId, status, output = '') {
+  state.nodeStatuses[nodeId] = status;
+  if (output) state.agentOutputs[nodeId] = output;
+
+  const el = document.getElementById(`node-${nodeId}`);
+  if (!el) return;
+
+  el.className = `agent-node status-${status}`;
+  const outputEl = el.querySelector('.node-output');
+  if (outputEl && output) outputEl.textContent = output;
+
+  const iconEl = el.querySelector('.node-status-icon');
+  if (iconEl) {
+    iconEl.textContent = { pending:'⏳', running:'🔄', completed:'✅', error:'❌', skipped:'⏭️' }[status] || '⏳';
+  }
+}
+
+// ── Elapsed timer ───────────────────────────────────────────
+function startElapsedTimer() {
+  clearInterval(state.elapsedTimer);
+  state.elapsedTimer = setInterval(() => {
+    if (state.startTime && state.isRunning) {
+      const s = ((Date.now() - state.startTime) / 1000).toFixed(0);
+      document.getElementById('metric-elapsed').textContent = s + 's';
+    }
+  }, 500);
+}
+
+// ══════════════════════════════════════════════════════════════
+// FORM SUBMIT
+// ══════════════════════════════════════════════════════════════
+async function onSubmit(e) {
+  e.preventDefault();
+  if (state.isRunning) return;
+
+  resetState();
+  setRunning(true);
+
+  const requestBody = {
+    destination: document.getElementById('destination').value.trim(),
+    days: parseInt(document.getElementById('days').value) || 7,
+    month: document.getElementById('month').value,
+    budget: document.getElementById('budget').value.trim() || '$2000',
+    interests: document.getElementById('interests').value.trim() || null,
+    travel_style: document.getElementById('travel-style').value,
+    num_travelers: parseInt(document.getElementById('travelers').value) || 1,
+    departure_city: document.getElementById('departure').value.trim() || '',
+    user_email: document.getElementById('email').value.trim() || null,
+    require_human_approval: document.getElementById('human-approval').checked,
+  };
+
+  state.requireApproval = requestBody.require_human_approval;
+
+  addLog('info', `Starting plan for ${requestBody.destination}`, 'start');
+  showOutputPanel();
+  switchTab('itinerary');
+  setStatus(`Planning ${requestBody.destination}...`);
+
+  try {
+    const response = await fetch('/graph/plan/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.detail || `HTTP ${response.status}`);
+    }
+
+    await readStream(response);
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      addLog('error', 'Request cancelled', 'error');
+    } else {
+      addLog('error', err.message, 'error');
+      showError(err.message);
+    }
+  } finally {
+    setRunning(false);
+    setStatus('Done');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SSE STREAM READER
+// ══════════════════════════════════════════════════════════════
+async function readStream(response) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop(); // Keep incomplete line
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          const parsed = JSON.parse(line.slice(6));
+          handleEvent(parsed.type, parsed.payload);
+        } catch (e) { /* Ignore malformed events */ }
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// EVENT HANDLER
+// ══════════════════════════════════════════════════════════════
+function handleEvent(type, payload) {
+  switch (type) {
+    case 'start':
+      state.sessionId = payload.session_id;
+      addLog('info', `Session: ${payload.session_id?.slice(0,8)} | ${payload.message}`, 'info');
+      break;
+
+    case 'node_start':
+      updateNodeStatus(payload.node, 'running', `Running...`);
+      updateProgress(payload.progress, payload.display_name);
+      addLog('start', `${payload.display_name} started`, 'start');
+      setStatus(`${payload.display_name}...`);
+      break;
+
+    case 'node_end':
+      updateNodeStatus(payload.node, 'completed', payload.output_preview || 'Done');
+      updateProgress(payload.progress, payload.display_name);
+      state.agentsDone++;
+      document.getElementById('metric-agents').textContent = state.agentsDone;
+      addLog('end', `${payload.display_name} completed (${payload.elapsed_sec}s)`, 'end');
+      break;
+
+    case 'agent_data':
+      renderAgentOutputs(payload.agents || {});
+      break;
+
+    case 'draft_ready':
+      state.currentDraft = payload.draft || '';
+      renderItinerary(state.currentDraft, false);
+      if (state.requireApproval) {
+        showApprovalPanel();
+      }
+      break;
+
+    case 'text_chunk':
+      // Append streaming text chunk
+      appendStreamingText(payload.text || '');
+      break;
+
+    case 'tool_start':
+      state.toolCallCount++;
+      document.getElementById('metric-tools').textContent = state.toolCallCount;
+      addToolFeedItem(payload.tool, 'running');
+      addLog('tool', `Tool: ${payload.tool} | ${payload.input}`, 'tool');
+      break;
+
+    case 'tool_end':
+      updateToolFeedItem(payload.tool, 'done');
+      break;
+
+    case 'human_approval_required':
+      showApprovalPanel();
+      addLog('info', 'Human approval required — review itinerary', 'info');
+      break;
+
+    case 'complete':
+      state.finalItinerary = payload.final_itinerary || state.currentDraft || '';
+      state.pdfPath = payload.pdf_path || '';
+
+      if (state.finalItinerary) {
+        renderItinerary(state.finalItinerary, true);
+      }
+
+      updateProgress(100, 'Complete ✅');
+      showCompletionActions();
+      addLog('end', `✅ Complete in ${payload.total_elapsed_sec}s`, 'end');
+
+      if (payload.email_sent) {
+        addLog('info', `📧 Itinerary emailed successfully`, 'info');
+      }
+
+      if (payload.errors?.length) {
+        payload.errors.forEach(e => {
+          state.errorCount++;
+          addLog('error', e, 'error');
+        });
+        document.getElementById('metric-errors').textContent = state.errorCount;
+      }
+      break;
+
+    case 'error':
+      state.errorCount++;
+      document.getElementById('metric-errors').textContent = state.errorCount;
+      addLog('error', payload.message, 'error');
+      showError(payload.message);
+      break;
+
+    case 'cancelled':
+      addLog('info', 'Stream cancelled', 'info');
+      break;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// UI UPDATERS
+// ══════════════════════════════════════════════════════════════
+function updateProgress(pct, label) {
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-label-text').textContent = label || 'Running...';
+}
+
+let streamingBuffer = '';
+let streamingMode = false;
+
+function appendStreamingText(text) {
+  streamingBuffer += text;
+  const el = document.getElementById('itinerary-output');
+  const emptyState = document.getElementById('empty-state');
+  emptyState.style.display = 'none';
+  el.style.display = 'block';
+  el.innerHTML = marked.parse(streamingBuffer) + '<span class="streaming-cursor"></span>';
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderItinerary(markdown, final = true) {
+  const el = document.getElementById('itinerary-output');
+  const emptyState = document.getElementById('empty-state');
+  emptyState.style.display = 'none';
+  el.style.display = 'block';
+
+  const html = marked.parse(markdown || '');
+  el.innerHTML = final ? html : html + '<span class="streaming-cursor"></span>';
+
+  if (final) {
+    streamingBuffer = markdown;
+    document.getElementById('copy-btn').style.display = 'flex';
+  }
+}
+
+function renderAgentOutputs(agents) {
+  const container = document.getElementById('agent-outputs-container');
+  container.innerHTML = '<div class="agent-outputs-grid" id="agent-grid"></div>';
+  const grid = document.getElementById('agent-grid');
+
+  for (const [key, data] of Object.entries(agents)) {
+    if (!data) continue;
+    const icon = AGENT_ICONS[key] || '🤖';
+    const card = document.createElement('div');
+    card.className = 'agent-output-card';
+    card.innerHTML = `
+      <div class="agent-output-header">${icon} ${key.charAt(0).toUpperCase() + key.slice(1)} Agent</div>
+      <div class="agent-output-body">${escHtml(data)}</div>
+    `;
+    grid.appendChild(card);
+  }
+}
+
+function showApprovalPanel() {
+  document.getElementById('approval-panel').classList.add('active');
+  document.getElementById('approval-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showCompletionActions() {
+  document.getElementById('copy-btn').style.display = 'flex';
+  if (state.pdfPath) {
+    document.getElementById('pdf-download-btn').style.display = 'flex';
+  }
+  document.getElementById('approval-panel').classList.remove('active');
+}
+
+function showOutputPanel() {
+  const emptyState = document.getElementById('empty-state');
+  emptyState.innerHTML = `
+    <div class="empty-globe" style="animation:spin 3s linear infinite">⚙️</div>
+    <div class="empty-title">AI Agents Working...</div>
+    <div class="empty-desc">
+      Specialist agents are researching your trip in parallel.<br/>
+      Watch the pipeline on the left — each agent lights up as it runs.
+    </div>
+  `;
+  emptyState.style.display = 'flex';
+  document.getElementById('itinerary-output').style.display = 'none';
+}
+
+function showError(msg) {
+  const el = document.getElementById('itinerary-output');
+  const emptyState = document.getElementById('empty-state');
+  if (!state.finalItinerary && !state.currentDraft) {
+    emptyState.style.display = 'flex';
+    emptyState.innerHTML = `
+      <div style="font-size:48px">⚠️</div>
+      <div class="empty-title" style="color:var(--accent-red)">Error Occurred</div>
+      <div class="empty-desc">${escHtml(msg)}</div>
+      <div class="empty-desc" style="margin-top:8px;font-size:12px;color:var(--text-dim)">
+        Check your API keys in .env and try again.
+      </div>
+    `;
+    el.style.display = 'none';
+  }
+}
+
+// ── Tool feed ───────────────────────────────────────────────
+const toolFeedMap = {};
+
+function addToolFeedItem(toolName, status) {
+  const feed = document.getElementById('tool-feed-items');
+  if (feed.children.length > 8) feed.removeChild(feed.firstChild);
+
+  const el = document.createElement('div');
+  el.className = `tool-item ${status}`;
+  el.id = `tool-${toolName}-${Date.now()}`;
+  el.innerHTML = `<span>⚡</span><span>${toolName}</span>`;
+  feed.appendChild(el);
+  toolFeedMap[toolName] = el.id;
+}
+
+function updateToolFeedItem(toolName, status) {
+  if (toolFeedMap[toolName]) {
+    const el = document.getElementById(toolFeedMap[toolName]);
+    if (el) {
+      el.className = `tool-item ${status}`;
+      el.innerHTML = `<span>${status === 'done' ? '✅' : '⚡'}</span><span>${toolName}</span>`;
+    }
+  }
+}
+
+// ── Event log ───────────────────────────────────────────────
+function addLog(type, msg, cssType) {
+  const log = document.getElementById('event-log');
+  const now = new Date().toTimeString().slice(0, 8);
+  const item = document.createElement('div');
+  item.className = 'log-item';
+  item.innerHTML = `
+    <span class="log-time">${now}</span>
+    <span class="log-type ${cssType || type}">${type}</span>
+    <span class="log-msg">${escHtml(msg.slice(0, 200))}</span>
+  `;
+  // Remove empty placeholder
+  const placeholder = log.querySelector('div[style]');
+  if (placeholder) placeholder.remove();
+  log.appendChild(item);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ══════════════════════════════════════════════════════════════
+// HUMAN APPROVAL
+// ══════════════════════════════════════════════════════════════
+async function submitApproval(approved) {
+  if (!state.sessionId) return;
+
+  const feedback = document.getElementById('approval-feedback').value.trim();
+
+  try {
+    const resp = await fetch('/graph/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: state.sessionId, approved, feedback }),
+    });
+    const data = await resp.json();
+
+    if (approved) {
+      document.getElementById('approval-panel').classList.remove('active');
+      if (data.final_itinerary) renderItinerary(data.final_itinerary, true);
+      showCompletionActions();
+      addLog('info', '✅ Human approved — finalizing...', 'end');
+    } else {
+      document.getElementById('approval-panel').classList.remove('active');
+      addLog('info', `🔄 Rejected — writer revising with feedback: ${feedback}`, 'info');
+    }
+  } catch (err) {
+    addLog('error', `Approval failed: ${err.message}`, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// UTILITY
+// ══════════════════════════════════════════════════════════════
+function resetState() {
+  state.nodeStatuses = {};
+  state.agentOutputs = {};
+  state.eventLog = [];
+  state.toolCallCount = 0;
+  state.agentsDone = 0;
+  state.errorCount = 0;
+  state.startTime = Date.now();
+  state.currentDraft = '';
+  state.finalItinerary = '';
+  state.pdfPath = '';
+  streamingBuffer = '';
+
+  document.getElementById('metric-tools').textContent = '0';
+  document.getElementById('metric-agents').textContent = '0';
+  document.getElementById('metric-errors').textContent = '0';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-pct').textContent = '0%';
+  document.getElementById('tool-feed-items').innerHTML = '';
+  document.getElementById('agent-outputs-container').innerHTML =
+    '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:40px;">Agent research results will appear here during generation...</div>';
+  document.getElementById('copy-btn').style.display = 'none';
+  document.getElementById('pdf-download-btn').style.display = 'none';
+  document.getElementById('approval-panel').classList.remove('active');
+  document.getElementById('approval-feedback').value = '';
+
+  PIPELINE_NODES.forEach(n => updateNodeStatus(n.id, 'pending', ''));
+  renderPipeline();
+
+  // Clear log
+  const log = document.getElementById('event-log');
+  log.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:8px 0;">Starting new request...</div>';
+}
+
+function setRunning(running) {
+  state.isRunning = running;
+  const btn = document.getElementById('submit-btn');
+  const spinner = document.getElementById('btn-spinner');
+  const text = document.getElementById('btn-text');
+
+  if (running) {
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    text.textContent = 'AI Agents Working...';
+  } else {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    text.textContent = '🚀 Generate AI Travel Plan';
+  }
+}
+
+function setStatus(msg) {
+  document.getElementById('status-text').textContent = msg;
+  const dot = document.getElementById('status-dot');
+  dot.style.background = state.isRunning ? 'var(--accent-orange)' : 'var(--accent-green)';
+}
+
+function switchTab(tab) {
+  ['itinerary', 'agents', 'log'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', ['itinerary', 'agents', 'log'][i] === tab);
+  });
+}
+
+function copyItinerary() {
+  const text = streamingBuffer || state.finalItinerary;
+  if (text) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => btn.textContent = '📋 Copy', 2000);
+    });
+  }
+}
+
+function downloadPDF() {
+  if (state.pdfPath) {
+    window.open(`/static/pdf?path=${encodeURIComponent(state.pdfPath)}`, '_blank');
+  } else {
+    alert('PDF not yet generated. Please wait for the plan to complete.');
+  }
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+// ── Example templates ────────────────────────────────────────
+const EXAMPLES = {
+  tokyo: {
+    destination: 'Tokyo, Japan',
+    days: 7, month: 'April', budget: '$3000',
+    interests: 'temples, sushi, anime, technology',
+    style: 'balanced', travelers: 2,
+  },
+  paris: {
+    destination: 'Paris, France',
+    days: 5, month: 'June', budget: '€2500',
+    interests: 'art, cafes, fashion, architecture',
+    style: 'comfort', travelers: 2,
+  },
+  bali: {
+    destination: 'Bali, Indonesia',
+    days: 10, month: 'July', budget: '$2000',
+    interests: 'yoga, surfing, temples, food',
+    style: 'balanced', travelers: 1,
+  },
+  goa: {
+    destination: 'Goa, India',
+    days: 5, month: 'December', budget: '₹60,000',
+    interests: 'beaches, seafood, parties, culture',
+    style: 'budget backpacker', travelers: 2,
+  },
+};
+
+function fillExample(key) {
+  const ex = EXAMPLES[key];
+  if (!ex) return;
+  document.getElementById('destination').value = ex.destination;
+  document.getElementById('days').value = ex.days;
+  document.getElementById('month').value = ex.month;
+  document.getElementById('budget').value = ex.budget;
+  document.getElementById('interests').value = ex.interests;
+  document.getElementById('travel-style').value = ex.style;
+  document.getElementById('travelers').value = ex.travelers;
+  document.getElementById('destination').focus();
+}
+</script>
 </body>
 </html>

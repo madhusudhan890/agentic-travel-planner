@@ -1,18 +1,49 @@
 [project]
 name = "agentic-travel-planner"
-version = "0.1.0"
-description = "Add your description here"
+version = "3.0.0"
+description = "Enterprise-grade AI Travel Planner — LangGraph multi-agent system (Phase 3)"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
-    "aiofiles>=25.1.0",
-    "fastapi>=0.138.0",
-    "langchain>=1.3.11",
-    "langchain-core>=1.4.8",
-    "langchain-google-genai>=4.2.5",
-    "pydantic>=2.13.4",
-    "pydantic-settings>=2.14.2",
-    "python-json-logger>=4.1.0",
-    "python-multipart>=0.0.32",
-    "uvicorn>=0.49.0",
+    # ── Web Framework ─────────────────────────────────────────────────────────
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "python-multipart>=0.0.12",
+    "sse-starlette>=2.1.0",         # Server-Sent Events for real-time streaming
+    "aiofiles>=24.1.0",
+    "httpx>=0.27.0",                # Async HTTP client (replaces urllib for tools)
+    # ── LangChain Core ────────────────────────────────────────────────────────
+    "langchain>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langchain-google-genai>=2.0.0",  # Gemini LLM + Embeddings
+    "langchainhub>=0.1.21",
+    # ── LangGraph (Phase 3: multi-agent state machine) ────────────────────────
+    # WHY LangGraph: AgentExecutor (Phase 2) is a linear loop.
+    # LangGraph is a DAG with state, conditional edges, loops, checkpoints,
+    # parallel fan-out, and human-in-the-loop — production AI orchestration.
+    "langgraph>=0.2.0",
+    "langgraph-checkpoint>=2.0.0",  # MemorySaver + base for Postgres checkpointer
+    # ── Vector Database (RAG) ─────────────────────────────────────────────────
+    # WHY ChromaDB: local, zero-setup, persistent. Production path → Qdrant/pgvector.
+    "chromadb>=0.5.0",
+    "langchain-chroma>=0.1.0",
+    # ── PDF Generation ────────────────────────────────────────────────────────
+    "reportlab>=4.2.0",             # PDF generation from Python (no API key needed)
+    # ── Observability ─────────────────────────────────────────────────────────
+    # WHY LangSmith: every LLM call, tool call, token count, cost — all visible.
+    # Free tier at smith.langchain.com. Set LANGSMITH_API_KEY in .env to enable.
+    "langsmith>=0.1.0",
+    # ── Data Validation ───────────────────────────────────────────────────────
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    # ── Retry + Resilience ────────────────────────────────────────────────────
+    # tenacity: the CORRECT way to retry async code without swallowing CancelledError
+    "tenacity>=9.0.0",
+    # ── Logging ───────────────────────────────────────────────────────────────
+    "python-json-logger>=2.0.7",
+    # ── Tools (free APIs) ─────────────────────────────────────────────────────
+    "wikipedia>=1.4.0",             # Destination info (free)
+    "aiohttp>=3.10.0",              # Async HTTP for Open-Meteo weather (free)
+    "langchain-text-splitters>=1.1.2",
 ]

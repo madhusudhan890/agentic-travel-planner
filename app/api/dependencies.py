@@ -1,34 +1,36 @@
 """
 app/api/dependencies.py
 ────────────────────────
-FastAPI dependency functions shared across all routes.
-
-The travel chain is resolved ONCE at startup, stored on `app.state`,
-and injected into routes via `Depends(get_travel_chain)`.
-
-This is identical to ChatPDF's dependency pattern — it keeps routes
-completely decoupled from the chain implementation.
+FastAPI dependency injection for the graph and chain layers.
 """
 
 from __future__ import annotations
 
-from fastapi import HTTPException, Request
+from fastapi import Depends, HTTPException, Request, Security
+from fastapi.security import APIKeyHeader
 
 from app.chain.base import TravelChain
+from app.core.config import get_settings
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+settings = get_settings()
+
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
-async def get_travel_chain(request: Request) -> TravelChain:
-    """
-    Return the active TravelChain from app.state.
-    Raises HTTP 503 if the chain's API key is missing.
-    """
-    chain: TravelChain = request.app.state.travel_chain
-    if not chain.is_configured:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                f"LLM provider '{chain.name}' is not configured. "
-                "Set the corresponding API key in your .env file."
-            ),
-        )
+async def verify_api_key(api_key: str = Security(_api_key_header)) -> bool:
+    """Optional API key authentication guard."""
+    if not settings.auth_required:
+        return True
+    if api_key == settings.api_key:
+        return True
+    raise HTTPException(status_code=403, detail="Invalid or missing API key")
+
+
+def get_travel_chain(request: Request) -> TravelChain:
+    """Inject the Phase 2 TravelChain from app.state."""
+    chain = getattr(request.app.state, "travel_chain", None)
+    if chain is None:
+        raise HTTPException(status_code=503, detail="Travel chain not initialized")
     return chain
